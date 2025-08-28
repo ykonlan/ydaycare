@@ -27,15 +27,13 @@ class Database{
             }
         }}
 
-    // wrapper (public callable function to return pdo object
+    // wrapper (public callable function to return pdo object)
     public static function get_connection(){
         if(self::$pdo === NULL){
             new Database();
         }
         return self::$pdo;
     }
-
-    
 }
 
 ?>

@@ -2,3 +2,18 @@ SetEnv DB_HOST localhost
 SetEnv DB_NAME mydb
 SetEnv DB_USER root
 SetEnv DB_PASS yourpassword
+
+#Apache Configuration
+
+#This project relies on Apache's mod_rewrite to route all requests through `index.php`.
+
+#Make sure you have `AllowOverride All` enabled in your Apache config, then add the following to your project's `.htaccess` file:
+
+RewriteEngine On
+
+RewriteCond %{REQUEST_FILENAME} !-f
+
+RewriteCond %{REQUEST_FILENAME} !-d
+
+RewriteRule ^ index.php [QSA,L]
+
