@@ -4,26 +4,38 @@ require_once "../utils/db.php";
 
 // Ward model
 class Ward{
-    public static function all($page, $search){
-        try{
-            // select wards
-            $pdo = Database::get_connection();
-            if(!$search){
-                $sql = "SELECT * FROM wards ORDER BY ward_name LIMIT ? OFFSET ?";
-                $stmnt = $pdo->prepare($sql);
-                $stmnt->execute([20, (($page-1) * 20)]);
-            }
-            else{
-                $sql="SELECT * FROM wards WHERE ward_name ILIKE ? or ward_class ILIKE ? ORDER BY ward_name LIMIT ? OFFSET ? " ;
-                $stmnt = $pdo->prepare($sql);
-                $stmnt->execute([$search, $search, 20, (($page-1) * 20)]);
-            }
-            $wards = $result->fetchAll(PDO::FETCH_ASSOC);
-            return ($wards);
+public static function all($page, $search){
+    try{
+        $pdo = Database::get_connection();
+        $limit = 20;
+        $offset = ($page - 1) * $limit;
+
+        if(!$search){
+            $sql = "SELECT * FROM wards ORDER BY ward_name LIMIT :limit OFFSET :offset";
+            $stmnt = $pdo->prepare($sql);
+            $stmnt->bindValue(':limit', $limit, PDO::PARAM_INT);
+            $stmnt->bindValue(':offset', $offset, PDO::PARAM_INT);
+        } else {
+            // Use LOWER() + LIKE for case-insensitive search in MySQL
+            $sql = "SELECT * FROM wards 
+                    WHERE LOWER(ward_name) LIKE :search 
+                       OR LOWER(ward_class) LIKE :search
+                    ORDER BY ward_name 
+                    LIMIT :limit OFFSET :offset";
+            $stmnt = $pdo->prepare($sql);
+            $stmnt->bindValue(':search', "%".strtolower(trim($search))."%", PDO::PARAM_STR);
+            $stmnt->bindValue(':limit', $limit, PDO::PARAM_INT);
+            $stmnt->bindValue(':offset', $offset, PDO::PARAM_INT);
         }
-        catch(PDOException $e){
-            return ["error"=>$e->getMessage()];
-        }
+
+        $stmnt->execute();
+        $wards = $stmnt->fetchAll(PDO::FETCH_ASSOC);
+        return $wards;
+
+    } catch(PDOException $e){
+        return ["error"=>$e->getMessage()];
+    }
+}
 
     }
 
@@ -88,5 +100,5 @@ class Ward{
             return ["error"=>$e->getMessage()];
         }
     }
-    }
+    
 ?>
