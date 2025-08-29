@@ -35,8 +35,8 @@ class WardController{
         $ward_parent = $_POST["ward_parent"];
         $ward_dob = $_POST["ward_dob"];
         $ward_class = $_POST["ward_class"];
-        $is_valid = validate($_POST);
-        if($is_valid){
+        $is_valid = Ward::validate($_POST);
+        if(!isset($is_valid["error"])){
             echo json_encode(Ward::add($ward_name, $ward_parent, $ward_dob, $ward_class));
         }
         else{
