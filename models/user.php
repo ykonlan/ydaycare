@@ -1,5 +1,5 @@
 <?php 
-require_once "../utils/db.php"
+require_once(__DIR__."/../utils/db.php");
 
 class User{
     public function all($page,$search){

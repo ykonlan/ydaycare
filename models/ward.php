@@ -1,6 +1,6 @@
 <?php 
 // importing the database file
-require_once "../utils/db.php";
+require_once (__DIR__."/../utils/db.php");
 
 // Ward model
 class Ward{
@@ -105,7 +105,7 @@ class Ward{
         return render_form("wards");
     }
 
-    public static function add($ward_name, $ward_parent, $ward_dob, $allergies, $ward_class){
+    public static function add($ward_name, $ward_parent, $ward_dob, $ward_class){
         try{
         $pdo = Database::get_connection();
         $pdo->beginTransaction();
@@ -139,6 +139,16 @@ class Ward{
             return ["error"=>"Couldn't add new ward". $e->getMessage()];
         }
         
+    }
+
+    public static function validate($data){
+        $required = ["ward_name","ward_parent","ward_dob","ward_class"];
+        foreach($required as $field){
+            if(empty($data[$field])){
+                return ["error"=>"Please provide {$field}"];
+            }
+        }
+        return TRUE;
     }
 }
 ?>

@@ -1,6 +1,6 @@
 <?php 
-include_once "../models/user.php";
-include_once "../utils/form_renderer.php";
+include_once __DIR__."/../models/user.php";
+include_once __DIR__."/../utils/form_renderer.php";
 
 class UserController{
     public static function all_users(){
