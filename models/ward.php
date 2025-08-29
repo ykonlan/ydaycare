@@ -4,38 +4,38 @@ require_once "../utils/db.php";
 
 // Ward model
 class Ward{
-public static function all($page, $search){
-    try{
-        $pdo = Database::get_connection();
-        $limit = 20;
-        $offset = ($page - 1) * $limit;
+    public static function all($page, $search){
+        try{
+            $pdo = Database::get_connection();
+            $limit = 20;
+            $offset = ($page - 1) * $limit;
 
-        if(!$search){
-            $sql = "SELECT * FROM wards ORDER BY ward_name LIMIT :limit OFFSET :offset";
-            $stmnt = $pdo->prepare($sql);
-            $stmnt->bindValue(':limit', $limit, PDO::PARAM_INT);
-            $stmnt->bindValue(':offset', $offset, PDO::PARAM_INT);
-        } else {
-            // Use LOWER() + LIKE for case-insensitive search in MySQL
-            $sql = "SELECT * FROM wards 
-                    WHERE LOWER(ward_name) LIKE :search 
-                       OR LOWER(ward_class) LIKE :search
-                    ORDER BY ward_name 
-                    LIMIT :limit OFFSET :offset";
-            $stmnt = $pdo->prepare($sql);
-            $stmnt->bindValue(':search', "%".strtolower(trim($search))."%", PDO::PARAM_STR);
-            $stmnt->bindValue(':limit', $limit, PDO::PARAM_INT);
-            $stmnt->bindValue(':offset', $offset, PDO::PARAM_INT);
+            if(!$search){
+                $sql = "SELECT * FROM wards ORDER BY ward_name LIMIT :limit OFFSET :offset";
+                $stmnt = $pdo->prepare($sql);
+                $stmnt->bindValue(':limit', $limit, PDO::PARAM_INT);
+                $stmnt->bindValue(':offset', $offset, PDO::PARAM_INT);
+            } else {
+                // Use LOWER() + LIKE for case-insensitive search in MySQL
+                $sql = "SELECT * FROM wards 
+                        WHERE LOWER(ward_name) LIKE :search 
+                        OR LOWER(ward_class) LIKE :search
+                        ORDER BY ward_name 
+                        LIMIT :limit OFFSET :offset";
+                $stmnt = $pdo->prepare($sql);
+                $stmnt->bindValue(':search', "%".strtolower(trim($search))."%", PDO::PARAM_STR);
+                $stmnt->bindValue(':limit', $limit, PDO::PARAM_INT);
+                $stmnt->bindValue(':offset', $offset, PDO::PARAM_INT);
+            }
+
+            $stmnt->execute();
+            $wards = $stmnt->fetchAll(PDO::FETCH_ASSOC);
+            return $wards;
+
+        } catch(PDOException $e){
+            return ["error"=>$e->getMessage()];
         }
 
-        $stmnt->execute();
-        $wards = $stmnt->fetchAll(PDO::FETCH_ASSOC);
-        return $wards;
-
-    } catch(PDOException $e){
-        return ["error"=>$e->getMessage()];
-    }
-}
 
     }
 
@@ -81,7 +81,7 @@ public static function all($page, $search){
             $pop = $row["class_population"] ?? NULL;
             // if no ward was obtained from query, ward does not exist, hence, no deletion was made so rollback transaction(don't reduce class population)
             if(!$ward_class){
-                $pdo->rollback();
+                $pdo->rollBack();
                 return ["error"=>"No such Ward found"];
             }
             // otherwise, proceed to delete ward and reduce class population
@@ -96,9 +96,49 @@ public static function all($page, $search){
             return ["success"=>"You have successfully deleted your ward details"];
         }
         catch(PDOException $e){
-            $pdo->rollback();
+            $pdo->rollBack();
             return ["error"=>$e->getMessage()];
         }
     }
-    
+
+    public static function render_form(){
+        return render_form("wards");
+    }
+
+    public static function add($ward_name, $ward_parent, $ward_dob, $allergies, $ward_class){
+        try{
+        $pdo = Database::get_connection();
+        $pdo->beginTransaction();
+        $sql = "INSERT INTO wards(ward_name, ward_dob, ward_parent, ward_class) VALUES (?,?,?,?)";
+        $stmnt = $pdo->prepare($sql);
+        $success = $stmnt->execute([$ward_name, $ward_dob, $ward_parent, $ward_class]);
+        if(!$success){
+            $pdo->rollBack();
+            return ["error"=>"Couldn't add new ward"];
+        }
+        $sql = "SELECT class_population FROM classes WHERE class_name = ?";
+        $stmnt = $pdo->prepare($sql);
+        $success = $stmnt->execute([$ward_class]);
+        if(!$success){
+            $pdo->rollBack();
+            return ["error"=>"Couldn't add new ward"];
+        }
+        $class_population = $stmnt->fetch(PDO::FETCH_ASSOC)["class_population"];
+        $sql = "UPDATE classes SET class_population=? WHERE class_name=?";
+        $stmnt = $pdo->prepare($sql);
+        $success = $stmnt->execute([$class_population+1, $ward_class]);
+        if(!$success){
+            $pdo->rollBack();
+            return ["error"=>"Couldn't add new ward"];
+        }
+        $pdo->commit();
+        return ["success"=> "Ward added successfully"];
+        }
+        catch(PDOException $e){
+            $pdo->rollBack();
+            return ["error"=>"Couldn't add new ward". $e->getMessage()];
+        }
+        
+    }
+}
 ?>
