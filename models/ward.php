@@ -16,7 +16,7 @@ class Ward{
                 $stmnt->bindValue(':limit', $limit, PDO::PARAM_INT);
                 $stmnt->bindValue(':offset', $offset, PDO::PARAM_INT);
             } else {
-                // Use LOWER() + LIKE for case-insensitive search in MySQL
+                // case-insensitive search for ward name or class
                 $sql = "SELECT * FROM wards 
                         WHERE LOWER(ward_name) LIKE :search 
                         OR LOWER(ward_class) LIKE :search
@@ -53,13 +53,16 @@ class Ward{
         }
     }
 
-    public static function edit($ward_name, $ward_parent, $ward_class, $id){
+    public static function edit($ward_name, $ward_parent, $ward_dob, $ward_class, $id){
         try{
             $pdo = Database::get_connection();
             // update ward details
             $sql = "UPDATE wards SET ward_name= ?,ward_parent =?,ward_class=? WHERE ward_id = ?";
             $stmnt = $pdo->prepare($sql);
             $stmnt->execute([$ward_name, $ward_parent, $ward_class, $id]);
+            if($stmnt->rowCount() <= 0){
+                return ["error"=>"No Ward was updated"];
+            }
             return ["success"=>"You have successfully edited your ward details"];
         }
         catch(PDOException $e){
@@ -101,10 +104,12 @@ class Ward{
         }
     }
 
+    // calling the generic form renderer to render form for ward creation if request is get
     public static function render_form(){
-        return render_form("wards");
+        return form_renderer("wards");
     }
 
+    // adding ward when post data is submitted
     public static function add($ward_name, $ward_parent, $ward_dob, $ward_class){
         try{
         $pdo = Database::get_connection();
@@ -136,11 +141,15 @@ class Ward{
         }
         catch(PDOException $e){
             $pdo->rollBack();
+            if($e->errorInfo[1] == 1062){
+                return ["error"=>"Ward is already in database."];
+            }
             return ["error"=>"Couldn't add new ward". $e->getMessage()];
         }
         
     }
 
+    // make sure all fields are populated
     public static function validate($data){
         $required = ["ward_name","ward_parent","ward_dob","ward_class"];
         foreach($required as $field){
@@ -150,5 +159,6 @@ class Ward{
         }
         return TRUE;
     }
+
 }
 ?>
