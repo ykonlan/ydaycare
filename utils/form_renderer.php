@@ -13,7 +13,8 @@ function form_renderer($model){
     $fkMap = ["ward_parent"=>["users","user_name"],
             "ward_class"=>["classes","class_name"],
             "user_role"=>["roles","role_name"],
-            "allergic_ward"=>["wards","ward_name"]
+            "allergic_ward"=>["wards","ward_name"],
+            "user_class"=>["classes","class_name"]
 ];
 
 

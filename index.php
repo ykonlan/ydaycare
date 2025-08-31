@@ -1,5 +1,7 @@
 <?php 
 include_once __DIR__. "/controllers/ward_controller.php";
+include_once __DIR__. "/controllers/user_controller.php";
+include_once __DIR__. "/controllers/auth_controller.php";
 include_once __DIR__. "/utils/form_renderer.php";
 $routes = [
     "/wards/add" => ["WardController", "add_ward"],
@@ -7,6 +9,12 @@ $routes = [
     "/wards/get" => ["WardController", "all_wards"],
     "/wards/edit/(\d+)" => ["WardController", "edit_ward"],
     "/wards/delete/(\d+)" => ["WardController", "delete_ward"],
+    "/users/get" => ["UserController", "all_users"],
+    "/users/add" => ["UserController", "add_user"],
+    "/users/get/(\d+)" => ["UserController", "get_user"],
+    "/users/edit/(\d+)" => ["UserController", "edit_user"],
+    "/users/delete/(\d+)" => ["UserController", "delete_user"],
+    "/login"=>["AuthController", "login"]
 ];
 
 $uri = $_SERVER['REQUEST_URI'];
